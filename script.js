@@ -25,23 +25,8 @@ const noTexts = [
     "最后一次机会！"
 ];
 
-// 让"不要"按钮在悬停时有闪避行为
-noButton.addEventListener("mouseover", function() {
-    // 随机移动按钮位置
-    const randomX = Math.random() * 100 - 50; // -50到50之间的随机值
-    const randomY = Math.random() * 100 - 50; // -50到50之间的随机值
-    noButton.style.transform = `translate(${noOffset + randomX}px, ${randomY}px)`;
-    // 添加抖动效果
-    noButton.style.transition = "transform 0.2s ease";
-});
-
-noButton.addEventListener("mouseout", function() {
-    // 恢复原来的位置
-    noButton.style.transform = `translateX(${noOffset}px)`;
-});
-
-// No 按钮点击事件
-noButton.addEventListener("click", function () {
+// 把No按钮点击的相关代码封装成函数，便于复用
+function handleNoButtonClick() {
     clickCount++;
 
     // 让 Yes 变大，每次放大 1.2 倍
@@ -75,6 +60,116 @@ noButton.addEventListener("click", function () {
     if (clickCount === 3) mainImage.src = "./images/angry.png"; 
     if (clickCount === 4) mainImage.src = "./images/crying.png";   
     if (clickCount >= 5) mainImage.src = "./images/crying.png";
+    
+    // 新增：随机改变透明度，让按钮更难找到
+    if (clickCount > 3) {
+        const randomOpacity = Math.random() * 0.7;
+        if (Math.random() > 0.5) {
+            noButton.style.opacity = randomOpacity;
+        } else {
+            noButton.style.opacity = 1;
+        }
+    }
+    
+    // 多次点击后添加疯狂模式
+    if (clickCount >= 7) {
+        noButton.classList.add("crazyMode");
+        
+        // 添加CSS样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes crazyShake {
+                0% { transform: translate(${noOffset}px, 0) rotate(0deg); }
+                25% { transform: translate(${noOffset + 20}px, -30px) rotate(10deg); }
+                50% { transform: translate(${noOffset - 20}px, 30px) rotate(-10deg); }
+                75% { transform: translate(${noOffset + 40}px, -15px) rotate(5deg); }
+                100% { transform: translate(${noOffset}px, 0) rotate(0deg); }
+            }
+            
+            .crazyMode {
+                animation: crazyShake 0.5s infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// 增强No按钮的闪避行为
+noButton.addEventListener("mouseover", function() {
+    // 增加移动范围，从之前的-50到50变为-200到200
+    const randomX = Math.random() * 400 - 200; 
+    const randomY = Math.random() * 400 - 200; 
+    
+    // 按钮更快地移动
+    noButton.style.transition = "all 0.1s ease";
+    
+    // 根据点击次数增加闪避能力
+    const evasionMultiplier = 1 + (clickCount * 0.5);
+    
+    // 随机改变大小
+    let scaleChange = "";
+    if (clickCount >= 3) {
+        const randomScale = Math.random() > 0.4 ? 
+                          0.5 + Math.random() * 0.4 : // 变小
+                          1.1 + Math.random() * 0.4;  // 变大
+        scaleChange = `scale(${randomScale})`;
+    }
+    
+    noButton.style.transform = `translate(${noOffset + randomX * evasionMultiplier}px, ${randomY * evasionMultiplier}px) ${scaleChange}`;
+});
+
+noButton.addEventListener("mouseout", function() {
+    // 恢复原来的位置
+    noButton.style.transform = `translateX(${noOffset}px)`;
+});
+
+// 添加鼠标移动监听，当鼠标接近时主动逃离
+document.addEventListener("mousemove", function(event) {
+    if (clickCount >= 2) {
+        const buttonRect = noButton.getBoundingClientRect();
+        const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+        const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+        
+        // 计算鼠标与按钮的距离
+        const distanceX = event.clientX - buttonCenterX;
+        const distanceY = event.clientY - buttonCenterY;
+        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+        
+        // 当鼠标靠近时，按钮主动逃离
+        const proximityThreshold = 150; // 感应距离
+        if (distance < proximityThreshold) {
+            // 计算逃离方向（与鼠标方向相反）
+            const escapeX = -distanceX * 1.5;
+            const escapeY = -distanceY * 1.5;
+            
+            noButton.style.transition = "transform 0.2s ease";
+            noButton.style.transform = `translate(${noOffset + escapeX}px, ${escapeY}px)`;
+        }
+    }
+});
+
+// 添加点击闪避 - 当尝试点击按钮时立即闪避
+noButton.addEventListener("mousedown", function(event) {
+    // 阻止默认点击行为
+    event.preventDefault();
+    
+    // 立即快速移动到新位置
+    const randomX = Math.random() * 300 - 150;
+    const randomY = Math.random() * 300 - 150;
+    noButton.style.transition = "transform 0.05s ease";
+    noButton.style.transform = `translate(${noOffset + randomX}px, ${randomY}px)`;
+    
+    // 只有1/3的几率才真正触发点击事件
+    if (Math.random() > 0.66) {
+        handleNoButtonClick();
+    }
+    
+    return false;
+});
+
+// No 按钮点击事件
+noButton.addEventListener("click", function () {
+    handleNoButtonClick();
 });
 
 // Yes 按钮点击后，进入表白成功页面

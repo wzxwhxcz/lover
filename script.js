@@ -33,6 +33,18 @@ function handleNoButtonClick() {
     let yesSize = 1 + (clickCount * 1.2);
     yesButton.style.transform = `scale(${yesSize})`;
     // 添加脉动动画
+    if (!document.querySelector("style#pulseAnimation")) {
+        const style = document.createElement('style');
+        style.id = "pulseAnimation";
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(${yesSize}); }
+                50% { transform: scale(${yesSize * 1.05}); }
+                100% { transform: scale(${yesSize}); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
     yesButton.style.animation = "pulse 1s infinite";
 
     // 挤压 No 按钮，每次右移 50px
@@ -73,24 +85,25 @@ function handleNoButtonClick() {
     
     // 多次点击后添加疯狂模式
     if (clickCount >= 7) {
+        if (!document.querySelector("style#crazyMode")) {
+            const style = document.createElement('style');
+            style.id = "crazyMode";
+            style.textContent = `
+                @keyframes crazyShake {
+                    0% { transform: translate(${noOffset}px, 0) rotate(0deg); }
+                    25% { transform: translate(${noOffset + 20}px, -30px) rotate(10deg); }
+                    50% { transform: translate(${noOffset - 20}px, 30px) rotate(-10deg); }
+                    75% { transform: translate(${noOffset + 40}px, -15px) rotate(5deg); }
+                    100% { transform: translate(${noOffset}px, 0) rotate(0deg); }
+                }
+                
+                .crazyMode {
+                    animation: crazyShake 0.5s infinite;
+                }
+            `;
+            document.head.appendChild(style);
+        }
         noButton.classList.add("crazyMode");
-        
-        // 添加CSS样式
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes crazyShake {
-                0% { transform: translate(${noOffset}px, 0) rotate(0deg); }
-                25% { transform: translate(${noOffset + 20}px, -30px) rotate(10deg); }
-                50% { transform: translate(${noOffset - 20}px, 30px) rotate(-10deg); }
-                75% { transform: translate(${noOffset + 40}px, -15px) rotate(5deg); }
-                100% { transform: translate(${noOffset}px, 0) rotate(0deg); }
-            }
-            
-            .crazyMode {
-                animation: crazyShake 0.5s infinite;
-            }
-        `;
-        document.head.appendChild(style);
     }
 }
 
@@ -223,83 +236,22 @@ yesButton.addEventListener("click", function () {
     // 更新页面内容为表白成功页面
     document.body.innerHTML = '';
     
-    // 添加五彩纸屑和漂浮爱心
-    document.body.appendChild(createConfetti());
-    document.body.appendChild(createFloatingHearts());
-    
-    // 添加主要内容
-    const yesScreen = document.createElement('div');
-    yesScreen.className = 'yes-screen';
-    yesScreen.innerHTML = `
-        <h1 class="yes-text animated">!!!喜欢你!! ( >᎑<)♡︎ᐝ</h1>
-        <img src="./images/hug.png" alt="拥抱" class="yes-image animated">
-        <p class="love-message">从今天开始，我们的故事正式开始啦！</p>
-        <p class="love-date">纪念日：${new Date().toLocaleDateString()}</p>
-    `;
-    
-    document.body.appendChild(yesScreen);
-    
-    // 添加CSS样式
-    const style = document.createElement('style');
-    style.textContent = `
-        body {
-            background-color: #ffecf1;
-            overflow: hidden;
-            transition: background-color 1s ease;
-            font-family: 'Arial', sans-serif;
+    // 添加必要的CSS动画
+    const animationStyle = document.createElement('style');
+    animationStyle.textContent = `
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(720deg); }
         }
         
-        .yes-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            z-index: 10;
-            position: relative;
-        }
-        
-        .yes-text {
-            color: #ff4d6d;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            animation: bounce 1s infinite alternate;
-        }
-        
-        .yes-image {
-            max-width: 300px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            animation: pulse 2s infinite;
-        }
-        
-        .love-message {
-            font-size: 1.5rem;
-            color: #ff758f;
-            margin-top: 2rem;
-            animation: fadeIn 2s;
-        }
-        
-        .love-date {
-            font-size: 1.2rem;
-            color: #ff8fa3;
-            margin-top: 1rem;
-            border: 2px dashed #ffb3c1;
-            padding: 10px 20px;
-            border-radius: 50px;
-            animation: fadeIn 3s;
+        @keyframes float-up {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100vh); }
         }
         
         @keyframes bounce {
             from { transform: translateY(0); }
             to { transform: translateY(-20px); }
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
         }
         
         @keyframes fadeIn {
@@ -325,11 +277,6 @@ yesButton.addEventListener("click", function () {
             animation: confetti-fall linear forwards;
         }
         
-        @keyframes confetti-fall {
-            0% { transform: translateY(0) rotate(0deg); }
-            100% { transform: translateY(100vh) rotate(720deg); }
-        }
-        
         .hearts-container {
             position: fixed;
             top: 0;
@@ -346,18 +293,60 @@ yesButton.addEventListener("click", function () {
             animation: float-up linear forwards;
         }
         
-        @keyframes float-up {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-100vh); }
+        .animated {
+            animation-duration: 1s;
+            animation-fill-mode: both;
+        }
+        
+        .yes-text {
+            animation: bounce 1s infinite alternate;
+            color: #ff4d6d;
+        }
+        
+        .yes-image {
+            animation: pulse 2s infinite;
+        }
+        
+        .love-message {
+            animation: fadeIn 2s;
+            color: #ff758f;
+            font-size: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .love-date {
+            animation: fadeIn 3s;
+            color: #ff8fa3;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+            border: 2px dashed #ffb3c1;
+            padding: 10px 20px;
+            border-radius: 50px;
         }
     `;
+    document.head.appendChild(animationStyle);
     
-    document.head.appendChild(style);
+    // 添加五彩纸屑和漂浮爱心
+    document.body.appendChild(createConfetti());
+    document.body.appendChild(createFloatingHearts());
+    
+    // 添加主要内容
+    const yesScreen = document.createElement('div');
+    yesScreen.className = 'yes-screen';
+    yesScreen.innerHTML = `
+        <h1 class="yes-text animated">!!!喜欢你!! ( >᎑<)♡︎ᐝ</h1>
+        <img src="./images/hug.png" alt="拥抱" class="yes-image animated">
+        <p class="love-message">从今天开始，我们的故事正式开始啦！</p>
+        <p class="love-date">纪念日：${new Date().toLocaleDateString()}</p>
+    `;
+    
+    document.body.appendChild(yesScreen);
 });
 
 // 给"可以"按钮添加悬停效果
 yesButton.addEventListener("mouseover", function() {
-    yesButton.style.transform = "scale(1.1)";
+    const currentSize = 1 + (clickCount * 1.2);
+    yesButton.style.transform = `scale(${currentSize * 1.1})`;
     yesButton.style.transition = "transform 0.3s ease";
     yesButton.style.boxShadow = "0 5px 15px rgba(255, 105, 180, 0.4)";
 });

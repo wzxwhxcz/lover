@@ -65,7 +65,6 @@ if (isMobile) {
     document.head.appendChild(mobileStyles);
 }
 
-
 // 修改handleNoButtonClick函数以更好地支持移动设备
 function handleNoButtonClick() {
     clickCount++;

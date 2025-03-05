@@ -28,7 +28,44 @@ const noTexts = [
 // 检测是否为移动设备
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-// 把No按钮点击的相关代码封装成函数，便于复用
+// 为移动设备添加额外CSS初始化
+if (isMobile) {
+    const mobileStyles = document.createElement('style');
+    mobileStyles.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @-webkit-keyframes pulse {
+            0% { -webkit-transform: scale(1); }
+            50% { -webkit-transform: scale(1.05); }
+            100% { -webkit-transform: scale(1); }
+        }
+        
+        /* 确保按钮在移动设备上有明显的过渡效果 */
+        #no, #yes {
+            transition: all 0.3s ease !important;
+            -webkit-transition: all 0.3s ease !important;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        @-webkit-keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(mobileStyles);
+}
+
+// 修改handleNoButtonClick函数以更好地支持移动设备
 function handleNoButtonClick() {
     clickCount++;
 
@@ -38,9 +75,19 @@ function handleNoButtonClick() {
     // 添加脉动动画
     yesButton.style.animation = "pulse 1s infinite";
 
-    // 挤压 No 按钮，每次右移 50px
+    // 挤压 No 按钮，每次右移 50px并应用变换
     noOffset = clickCount * 50;
-    noButton.style.transform = `translateX(${noOffset}px)`;
+    
+    // 在移动设备上，确保变换效果更明显
+    if (isMobile) {
+        // 随机决定是放大还是缩小，但要确保视觉效果明显
+        const scaleEffect = (Math.random() > 0.5) ? 0.7 : 1.3;
+        noButton.style.transform = `translateX(${noOffset}px) scale(${scaleEffect})`;
+        // 确保动画平滑过渡
+        noButton.style.transition = "all 0.3s ease";
+    } else {
+        noButton.style.transform = `translateX(${noOffset}px)`;
+    }
 
     // 让图片和文字往上移动
     let moveUp = clickCount * 25;
@@ -64,14 +111,20 @@ function handleNoButtonClick() {
     if (clickCount === 4) mainImage.src = "./images/crying.png";   
     if (clickCount >= 5) mainImage.src = "./images/crying.png";
     
-    // 新增：随机改变透明度，让按钮更难找到
+    // 对移动设备特别处理透明度
     if (clickCount > 3) {
-        const randomOpacity = Math.random() * 0.7;
-        if (Math.random() > 0.5) {
+        const randomOpacity = Math.random() * 0.7 + 0.3; // 最小透明度为0.3，确保可见
+        if (Math.random() > 0.5 || isMobile) {
             noButton.style.opacity = randomOpacity;
         } else {
             noButton.style.opacity = 1;
         }
+    }
+    
+    // 为移动设备添加额外视觉反馈
+    if (isMobile && clickCount >= 2) {
+        // 添加闪烁效果
+        noButton.style.animation = "blink 0.5s 3";
     }
     
     // 多次点击后添加疯狂模式
@@ -82,15 +135,24 @@ function handleNoButtonClick() {
         const style = document.createElement('style');
         style.textContent = `
             @keyframes crazyShake {
-                0% { transform: translate(${noOffset}px, 0) rotate(0deg); }
-                25% { transform: translate(${noOffset + 20}px, -30px) rotate(10deg); }
-                50% { transform: translate(${noOffset - 20}px, 30px) rotate(-10deg); }
-                75% { transform: translate(${noOffset + 40}px, -15px) rotate(5deg); }
-                100% { transform: translate(${noOffset}px, 0) rotate(0deg); }
+                0% { transform: translate(${noOffset}px, 0) rotate(0deg) scale(1.2); }
+                25% { transform: translate(${noOffset + 20}px, -30px) rotate(10deg) scale(0.8); }
+                50% { transform: translate(${noOffset - 20}px, 30px) rotate(-10deg) scale(1.2); }
+                75% { transform: translate(${noOffset + 40}px, -15px) rotate(5deg) scale(0.9); }
+                100% { transform: translate(${noOffset}px, 0) rotate(0deg) scale(1.2); }
+            }
+            
+            @-webkit-keyframes crazyShake {
+                0% { -webkit-transform: translate(${noOffset}px, 0) rotate(0deg) scale(1.2); }
+                25% { -webkit-transform: translate(${noOffset + 20}px, -30px) rotate(10deg) scale(0.8); }
+                50% { -webkit-transform: translate(${noOffset - 20}px, 30px) rotate(-10deg) scale(1.2); }
+                75% { -webkit-transform: translate(${noOffset + 40}px, -15px) rotate(5deg) scale(0.9); }
+                100% { -webkit-transform: translate(${noOffset}px, 0) rotate(0deg) scale(1.2); }
             }
             
             .crazyMode {
-                animation: crazyShake 0.5s infinite;
+                animation: crazyShake 0.5s infinite !important;
+                -webkit-animation: crazyShake 0.5s infinite !important;
             }
         `;
         document.head.appendChild(style);
@@ -124,24 +186,47 @@ noButton.addEventListener("mouseover", function() {
 
 noButton.addEventListener("mouseout", function() {
     // 恢复原来的位置
-    noButton.style.transform = `translateX(${noOffset}px)`;
+    if (isMobile) {
+        const scaleEffect = (Math.random() > 0.5) ? 0.7 : 1.3;
+        noButton.style.transform = `translateX(${noOffset}px) scale(${scaleEffect})`;
+    } else {
+        noButton.style.transform = `translateX(${noOffset}px)`;
+    }
 });
 
-// 添加触摸事件支持移动设备
+// 修改触摸事件支持移动设备
 noButton.addEventListener("touchstart", function(event) {
     // 阻止默认触摸行为
     event.preventDefault();
     
-    // 只有1/3的几率才真正触发点击事件
-    if (Math.random() > 0.66) {
+    // 增加触发点击事件的几率，从33%改为50%
+    if (Math.random() > 0.5) {
+        // 直接调用点击处理函数
         handleNoButtonClick();
     } else {
-        // 立即快速移动到新位置
+        // 立即快速移动到新位置，但保留大小变化
         const randomX = Math.random() * 200 - 100;
         const randomY = Math.random() * 200 - 100;
+        
+        // 如果已经有放大效果，保留放大效果
+        let scaleChange = "";
+        if (clickCount >= 2) {
+            const randomScale = Math.random() > 0.4 ? 
+                            0.5 + Math.random() * 0.4 : // 变小
+                            1.1 + Math.random() * 0.4;  // 变大
+            scaleChange = `scale(${randomScale})`;
+        }
+        
         noButton.style.transition = "transform 0.05s ease";
-        noButton.style.transform = `translate(${noOffset + randomX}px, ${randomY}px)`;
+        noButton.style.transform = `translate(${noOffset + randomX}px, ${randomY}px) ${scaleChange}`;
     }
+    
+    // 在触摸事件1秒后，强制应用一次handleNoButtonClick，确保视觉效果生效
+    setTimeout(function() {
+        if (Math.random() > 0.7) { // 30%的几率额外增加一次点击效果
+            handleNoButtonClick();
+        }
+    }, 1000);
     
     return false;
 });
@@ -490,6 +575,22 @@ yesButton.addEventListener("click", function () {
         newBody.appendChild(createConfetti());
         newBody.appendChild(createFloatingHearts());
     }, 1000);
+    
+    // 增加额外的动画添加
+    setInterval(function() {
+        // 每3秒添加新的动画元素，确保持续效果
+        newBody.appendChild(createConfetti());
+        newBody.appendChild(createFloatingHearts());
+        
+        // 为避免过多DOM元素，移除较旧的动画容器
+        const containers = newBody.querySelectorAll('.confetti-container, .hearts-container');
+        if (containers.length > 6) {
+            // 保留最新的元素，移除较旧的
+            for (let i = 0; i < containers.length - 6; i++) {
+                newBody.removeChild(containers[i]);
+            }
+        }
+    }, 3000);
 });
 
 // 给"可以"按钮添加悬停效果
@@ -504,22 +605,3 @@ yesButton.addEventListener("mouseout", function() {
     yesButton.style.transform = `scale(${currentSize})`;
     yesButton.style.boxShadow = "none";
 });
-
-// 为移动设备添加额外CSS初始化
-if (isMobile) {
-    const mobileStyles = document.createElement('style');
-    mobileStyles.textContent = `
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        @-webkit-keyframes pulse {
-            0% { -webkit-transform: scale(1); }
-            50% { -webkit-transform: scale(1.05); }
-            100% { -webkit-transform: scale(1); }
-        }
-    `;
-    document.head.appendChild(mobileStyles);
-}

@@ -197,9 +197,10 @@ noButton.addEventListener("click", function () {
     handleNoButtonClick();
 });
 
+
 // Yes 按钮点击后，进入表白成功页面
 yesButton.addEventListener("click", function () {
-    // 创建五彩纸屑效果的函数 - 移动端优化版本
+    // 创建五彩纸屑效果的函数 - 修复版本
     function createConfetti() {
         const confettiContainer = document.createElement('div');
         confettiContainer.className = 'confetti-container';
@@ -211,14 +212,17 @@ yesButton.addEventListener("click", function () {
             const confetti = document.createElement('div');
             confetti.className = 'confetti';
             
-            // 使用vw单位确保在所有设备上均匀分布
+            // 调整起始位置，确保从视口顶部开始
+            confetti.style.position = 'fixed';
+            confetti.style.top = "-10px";
             confetti.style.left = Math.random() * 100 + 'vw';
+            
             // 调整大小以适应移动屏幕
             confetti.style.width = (isMobile ? 5 : 10) + 'px';
             confetti.style.height = (isMobile ? 10 : 20) + 'px';
             
+            // 动画时间和延迟
             confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
-            // 减少动画延迟以便更快看到效果
             confetti.style.animationDelay = Math.random() + 's';
             
             // 随机颜色
@@ -234,22 +238,26 @@ yesButton.addEventListener("click", function () {
         return confettiContainer;
     }
     
-    // 创建漂浮爱心的函数 - 移动端优化版本
+    // 创建漂浮爱心的函数 - 修复版本
     function createFloatingHearts() {
         const heartsContainer = document.createElement('div');
         heartsContainer.className = 'hearts-container';
         
         // 减少移动端的爱心数量
-        const heartCount = isMobile ? 10 : 30;
+        const heartCount = isMobile ? 15 : 30;
         
         for (let i = 0; i < heartCount; i++) {
             const heart = document.createElement('div');
             heart.className = 'floating-heart';
             heart.innerHTML = '❤️';
             
-            // 使用vw单位确保在所有设备上均匀分布
+            // 使用fixed定位，确保在视口内
+            heart.style.position = 'fixed';
+            // 爱心从底部出现
+            heart.style.bottom = "-50px";
             heart.style.left = Math.random() * 100 + 'vw';
-            // 调整动画时间
+            
+            // 动画时间和延迟
             heart.style.animationDuration = Math.random() * 3 + 3 + 's';
             heart.style.animationDelay = Math.random() + 's';
             
@@ -265,6 +273,15 @@ yesButton.addEventListener("click", function () {
 
     // 更新页面内容为表白成功页面
     document.body.innerHTML = '';
+    
+    // 设置页面基本样式
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.overflow = 'hidden'; // 防止滚动
+    document.body.style.height = '100vh';
+    document.body.style.width = '100vw';
+    document.body.style.backgroundColor = '#ffecf1';
+    document.body.style.position = 'relative';
     
     // 添加五彩纸屑和漂浮爱心
     document.body.appendChild(createConfetti());
@@ -282,16 +299,26 @@ yesButton.addEventListener("click", function () {
     
     document.body.appendChild(yesScreen);
     
-    // 添加CSS样式 - 移动端优化版
+    // 添加CSS样式 - 修复版
     const style = document.createElement('style');
     style.textContent = `
-        body {
-            background-color: #ffecf1;
-            overflow: hidden;
-            transition: background-color 1s ease;
-            font-family: 'Arial', sans-serif;
+        html, body {
             margin: 0;
             padding: 0;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        body {
+            background-color: #ffecf1;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .yes-screen {
@@ -299,11 +326,13 @@ yesButton.addEventListener("click", function () {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             text-align: center;
             z-index: 10;
             position: relative;
             padding: 0 20px;
+            box-sizing: border-box;
         }
         
         .yes-text {
@@ -311,6 +340,7 @@ yesButton.addEventListener("click", function () {
             font-size: 2.5rem;
             margin-bottom: 1rem;
             animation: bounce 1s infinite alternate;
+            -webkit-animation: bounce 1s infinite alternate;
         }
         
         .yes-image {
@@ -319,6 +349,7 @@ yesButton.addEventListener("click", function () {
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             animation: pulse 2s infinite;
+            -webkit-animation: pulse 2s infinite;
         }
         
         .love-message {
@@ -326,6 +357,7 @@ yesButton.addEventListener("click", function () {
             color: #ff758f;
             margin-top: 2rem;
             animation: fadeIn 2s;
+            -webkit-animation: fadeIn 2s;
         }
         
         .love-date {
@@ -336,6 +368,7 @@ yesButton.addEventListener("click", function () {
             padding: 10px 20px;
             border-radius: 50px;
             animation: fadeIn 3s;
+            -webkit-animation: fadeIn 3s;
         }
         
         @keyframes bounce {
@@ -377,29 +410,26 @@ yesButton.addEventListener("click", function () {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1;
-            overflow: hidden;
+            z-index: 5;
         }
         
         .confetti {
-            position: absolute;
-            top: -10px;
+            position: fixed;
             width: 10px;
             height: 20px;
             animation: confetti-fall linear forwards;
             -webkit-animation: confetti-fall linear forwards;
-            will-change: transform;
-            -webkit-transform-style: preserve-3d;
-            transform-style: preserve-3d;
+            animation-iteration-count: infinite;
+            -webkit-animation-iteration-count: infinite;
         }
         
         @keyframes confetti-fall {
-            0% { transform: translateY(0) rotate(0deg); }
+            0% { transform: translateY(-10px) rotate(0deg); }
             100% { transform: translateY(100vh) rotate(720deg); }
         }
         
         @-webkit-keyframes confetti-fall {
-            0% { -webkit-transform: translateY(0) rotate(0deg); }
+            0% { -webkit-transform: translateY(-10px) rotate(0deg); }
             100% { -webkit-transform: translateY(100vh) rotate(720deg); }
         }
         
@@ -410,18 +440,15 @@ yesButton.addEventListener("click", function () {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 2;
-            overflow: hidden;
+            z-index: 6;
         }
         
         .floating-heart {
-            position: absolute;
-            bottom: -50px;
+            position: fixed;
             animation: float-up linear forwards;
             -webkit-animation: float-up linear forwards;
-            will-change: transform;
-            -webkit-transform-style: preserve-3d;
-            transform-style: preserve-3d;
+            animation-iteration-count: infinite;
+            -webkit-animation-iteration-count: infinite;
         }
         
         @keyframes float-up {
@@ -447,19 +474,19 @@ yesButton.addEventListener("click", function () {
             .love-date {
                 font-size: 1rem;
             }
-            
-            .confetti {
-                width: 5px;
-                height: 10px;
-            }
-            
-            .floating-heart {
-                font-size: 14px;
-            }
         }
     `;
     
     document.head.appendChild(style);
+    
+    // 确保动画立即开始并持续
+    setTimeout(function() {
+        // 在页面加载后重新创建一些动画元素，确保它们显示
+        const newConfetti = createConfetti();
+        const newHearts = createFloatingHearts();
+        document.body.appendChild(newConfetti);
+        document.body.appendChild(newHearts);
+    }, 1000);
 });
 
 // 给"可以"按钮添加悬停效果

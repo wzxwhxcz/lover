@@ -70,31 +70,25 @@ if (isMobile) {
 function handleNoButtonClick() {
     clickCount++;
 
-    // 调整移动端的缩放系数，使其更明显
-    let yesSize;
-    if (isMobile) {
-        // 移动端上更大的缩放系数
-        yesSize = 1 + (clickCount * 1.2); // 从1.2增加到2.0
-        
-        // 直接设置宽高和缩放，确保效果明显
-        yesButton.style.transform = `scale(${yesSize})`;
-        yesButton.style.webkitTransform = `scale(${yesSize})`; // 为Safari添加
-        
-        // 强制添加内联样式以覆盖任何可能的CSS规则
-        yesButton.style.width = `${yesButton.offsetWidth}px`;
-        yesButton.style.height = `${yesButton.offsetHeight}px`;
-        
-        // 添加过渡效果确保动画平滑
-        yesButton.style.transition = "all 0.3s ease-in-out";
-        yesButton.style.webkitTransition = "all 0.3s ease-in-out";
-    } else {
-        // 桌面端保持原来的缩放系数
-        yesSize = 1 + (clickCount * 1.2);
-        yesButton.style.transform = `scale(${yesSize})`;
-    }
+    // 让 Yes 变大，每次放大 1.2 倍
+    let yesSize = 1 + (clickCount * 1.2);
+    yesButton.style.transform = `scale(${yesSize})`;
+    // 添加脉动动画
+    yesButton.style.animation = "pulse 1s infinite";
+
+    // 挤压 No 按钮，每次右移 50px并应用变换
+    noOffset = clickCount * 50;
     
-    // 添加脉动动画，确保在移动端也有效
-    yesButton.style.animation = "
+    // 在移动设备上，确保变换效果更明显
+    if (isMobile) {
+        // 随机决定是放大还是缩小，但要确保视觉效果明显
+        const scaleEffect = (Math.random() > 0.5) ? 0.7 : 1.3;
+        noButton.style.transform = `translateX(${noOffset}px) scale(${scaleEffect})`;
+        // 确保动画平滑过渡
+        noButton.style.transition = "all 0.3s ease";
+    } else {
+        noButton.style.transform = `translateX(${noOffset}px)`;
+    }
 
     // 让图片和文字往上移动
     let moveUp = clickCount * 25;

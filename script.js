@@ -25,6 +25,9 @@ const noTexts = [
     "最后一次机会！"
 ];
 
+// 检测是否为移动设备
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // 把No按钮点击的相关代码封装成函数，便于复用
 function handleNoButtonClick() {
     clickCount++;
@@ -96,9 +99,10 @@ function handleNoButtonClick() {
 
 // 增强No按钮的闪避行为
 noButton.addEventListener("mouseover", function() {
-    // 增加移动范围，从之前的-50到50变为-200到200
-    const randomX = Math.random() * 400 - 200; 
-    const randomY = Math.random() * 400 - 200; 
+    // 调整移动端和桌面端的闪避距离
+    const moveRange = isMobile ? 150 : 400;
+    const randomX = Math.random() * moveRange - (moveRange/2); 
+    const randomY = Math.random() * moveRange - (moveRange/2); 
     
     // 按钮更快地移动
     noButton.style.transition = "all 0.1s ease";
@@ -123,30 +127,51 @@ noButton.addEventListener("mouseout", function() {
     noButton.style.transform = `translateX(${noOffset}px)`;
 });
 
-// 添加鼠标移动监听，当鼠标接近时主动逃离
-document.addEventListener("mousemove", function(event) {
-    if (clickCount >= 2) {
-        const buttonRect = noButton.getBoundingClientRect();
-        const buttonCenterX = buttonRect.left + buttonRect.width / 2;
-        const buttonCenterY = buttonRect.top + buttonRect.height / 2;
-        
-        // 计算鼠标与按钮的距离
-        const distanceX = event.clientX - buttonCenterX;
-        const distanceY = event.clientY - buttonCenterY;
-        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-        
-        // 当鼠标靠近时，按钮主动逃离
-        const proximityThreshold = 150; // 感应距离
-        if (distance < proximityThreshold) {
-            // 计算逃离方向（与鼠标方向相反）
-            const escapeX = -distanceX * 1.5;
-            const escapeY = -distanceY * 1.5;
-            
-            noButton.style.transition = "transform 0.2s ease";
-            noButton.style.transform = `translate(${noOffset + escapeX}px, ${escapeY}px)`;
-        }
+// 添加触摸事件支持移动设备
+noButton.addEventListener("touchstart", function(event) {
+    // 阻止默认触摸行为
+    event.preventDefault();
+    
+    // 只有1/3的几率才真正触发点击事件
+    if (Math.random() > 0.66) {
+        handleNoButtonClick();
+    } else {
+        // 立即快速移动到新位置
+        const randomX = Math.random() * 200 - 100;
+        const randomY = Math.random() * 200 - 100;
+        noButton.style.transition = "transform 0.05s ease";
+        noButton.style.transform = `translate(${noOffset + randomX}px, ${randomY}px)`;
     }
+    
+    return false;
 });
+
+// 添加鼠标移动监听，当鼠标接近时主动逃离（仅桌面端）
+if (!isMobile) {
+    document.addEventListener("mousemove", function(event) {
+        if (clickCount >= 2) {
+            const buttonRect = noButton.getBoundingClientRect();
+            const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+            const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+            
+            // 计算鼠标与按钮的距离
+            const distanceX = event.clientX - buttonCenterX;
+            const distanceY = event.clientY - buttonCenterY;
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+            
+            // 当鼠标靠近时，按钮主动逃离
+            const proximityThreshold = 150; // 感应距离
+            if (distance < proximityThreshold) {
+                // 计算逃离方向（与鼠标方向相反）
+                const escapeX = -distanceX * 1.5;
+                const escapeY = -distanceY * 1.5;
+                
+                noButton.style.transition = "transform 0.2s ease";
+                noButton.style.transform = `translate(${noOffset + escapeX}px, ${escapeY}px)`;
+            }
+        }
+    });
+}
 
 // 添加点击闪避 - 当尝试点击按钮时立即闪避
 noButton.addEventListener("mousedown", function(event) {
@@ -174,17 +199,27 @@ noButton.addEventListener("click", function () {
 
 // Yes 按钮点击后，进入表白成功页面
 yesButton.addEventListener("click", function () {
-    // 创建五彩纸屑效果的函数
+    // 创建五彩纸屑效果的函数 - 移动端优化版本
     function createConfetti() {
         const confettiContainer = document.createElement('div');
         confettiContainer.className = 'confetti-container';
         
-        for (let i = 0; i < 100; i++) {
+        // 减少移动端的粒子数量
+        const particleCount = isMobile ? 30 : 100;
+        
+        for (let i = 0; i < particleCount; i++) {
             const confetti = document.createElement('div');
             confetti.className = 'confetti';
+            
+            // 使用vw单位确保在所有设备上均匀分布
             confetti.style.left = Math.random() * 100 + 'vw';
+            // 调整大小以适应移动屏幕
+            confetti.style.width = (isMobile ? 5 : 10) + 'px';
+            confetti.style.height = (isMobile ? 10 : 20) + 'px';
+            
             confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
-            confetti.style.animationDelay = Math.random() * 2 + 's';
+            // 减少动画延迟以便更快看到效果
+            confetti.style.animationDelay = Math.random() + 's';
             
             // 随机颜色
             const colors = ['#ff718d', '#fdff8f', '#9cff9c', '#a0c4ff', '#ffc6ff'];
@@ -199,19 +234,27 @@ yesButton.addEventListener("click", function () {
         return confettiContainer;
     }
     
-    // 创建漂浮爱心的函数
+    // 创建漂浮爱心的函数 - 移动端优化版本
     function createFloatingHearts() {
         const heartsContainer = document.createElement('div');
         heartsContainer.className = 'hearts-container';
         
-        for (let i = 0; i < 30; i++) {
+        // 减少移动端的爱心数量
+        const heartCount = isMobile ? 10 : 30;
+        
+        for (let i = 0; i < heartCount; i++) {
             const heart = document.createElement('div');
             heart.className = 'floating-heart';
             heart.innerHTML = '❤️';
+            
+            // 使用vw单位确保在所有设备上均匀分布
             heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = Math.random() * 3 + 4 + 's';
-            heart.style.animationDelay = Math.random() * 2 + 's';
-            heart.style.fontSize = Math.random() * 20 + 10 + 'px';
+            // 调整动画时间
+            heart.style.animationDuration = Math.random() * 3 + 3 + 's';
+            heart.style.animationDelay = Math.random() + 's';
+            
+            // 移动端适当调整大小
+            heart.style.fontSize = (Math.random() * (isMobile ? 16 : 20) + (isMobile ? 8 : 10)) + 'px';
             heart.style.opacity = Math.random() * 0.5 + 0.5;
             
             heartsContainer.appendChild(heart);
@@ -239,7 +282,7 @@ yesButton.addEventListener("click", function () {
     
     document.body.appendChild(yesScreen);
     
-    // 添加CSS样式
+    // 添加CSS样式 - 移动端优化版
     const style = document.createElement('style');
     style.textContent = `
         body {
@@ -247,6 +290,8 @@ yesButton.addEventListener("click", function () {
             overflow: hidden;
             transition: background-color 1s ease;
             font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
         }
         
         .yes-screen {
@@ -258,6 +303,7 @@ yesButton.addEventListener("click", function () {
             text-align: center;
             z-index: 10;
             position: relative;
+            padding: 0 20px;
         }
         
         .yes-text {
@@ -268,7 +314,8 @@ yesButton.addEventListener("click", function () {
         }
         
         .yes-image {
-            max-width: 300px;
+            max-width: 80%;
+            width: 300px;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             animation: pulse 2s infinite;
@@ -296,15 +343,31 @@ yesButton.addEventListener("click", function () {
             to { transform: translateY(-20px); }
         }
         
+        @-webkit-keyframes bounce {
+            from { -webkit-transform: translateY(0); }
+            to { -webkit-transform: translateY(-20px); }
+        }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
         
+        @-webkit-keyframes pulse {
+            0% { -webkit-transform: scale(1); }
+            50% { -webkit-transform: scale(1.05); }
+            100% { -webkit-transform: scale(1); }
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @-webkit-keyframes fadeIn {
+            from { opacity: 0; -webkit-transform: translateY(20px); }
+            to { opacity: 1; -webkit-transform: translateY(0); }
         }
         
         .confetti-container {
@@ -315,6 +378,7 @@ yesButton.addEventListener("click", function () {
             height: 100%;
             pointer-events: none;
             z-index: 1;
+            overflow: hidden;
         }
         
         .confetti {
@@ -323,11 +387,20 @@ yesButton.addEventListener("click", function () {
             width: 10px;
             height: 20px;
             animation: confetti-fall linear forwards;
+            -webkit-animation: confetti-fall linear forwards;
+            will-change: transform;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
         }
         
         @keyframes confetti-fall {
             0% { transform: translateY(0) rotate(0deg); }
             100% { transform: translateY(100vh) rotate(720deg); }
+        }
+        
+        @-webkit-keyframes confetti-fall {
+            0% { -webkit-transform: translateY(0) rotate(0deg); }
+            100% { -webkit-transform: translateY(100vh) rotate(720deg); }
         }
         
         .hearts-container {
@@ -338,17 +411,51 @@ yesButton.addEventListener("click", function () {
             height: 100%;
             pointer-events: none;
             z-index: 2;
+            overflow: hidden;
         }
         
         .floating-heart {
             position: absolute;
             bottom: -50px;
             animation: float-up linear forwards;
+            -webkit-animation: float-up linear forwards;
+            will-change: transform;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
         }
         
         @keyframes float-up {
             0% { transform: translateY(0); }
             100% { transform: translateY(-100vh); }
+        }
+        
+        @-webkit-keyframes float-up {
+            0% { -webkit-transform: translateY(0); }
+            100% { -webkit-transform: translateY(-100vh); }
+        }
+        
+        /* 移动端特定样式 */
+        @media (max-width: 768px) {
+            .yes-text {
+                font-size: 1.8rem;
+            }
+            
+            .love-message {
+                font-size: 1.2rem;
+            }
+            
+            .love-date {
+                font-size: 1rem;
+            }
+            
+            .confetti {
+                width: 5px;
+                height: 10px;
+            }
+            
+            .floating-heart {
+                font-size: 14px;
+            }
         }
     `;
     
@@ -367,3 +474,22 @@ yesButton.addEventListener("mouseout", function() {
     yesButton.style.transform = `scale(${currentSize})`;
     yesButton.style.boxShadow = "none";
 });
+
+// 为移动设备添加额外CSS初始化
+if (isMobile) {
+    const mobileStyles = document.createElement('style');
+    mobileStyles.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @-webkit-keyframes pulse {
+            0% { -webkit-transform: scale(1); }
+            50% { -webkit-transform: scale(1.05); }
+            100% { -webkit-transform: scale(1); }
+        }
+    `;
+    document.head.appendChild(mobileStyles);
+}
